@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 为这个mapper指定一个唯一的namespace，namespace的值习惯上设置成包名+sql映射文件名，这样就能够保证namespace的值是唯一的
+例如namespace="org.vincent.mapping.Mapper"就是org.vincent.mapping(包名)+Mapper(Mapper.xml文件去除后缀);
+但是如有需要通过定义一个接口方法定义访问数据库接口方法，那么namespace必须取接口全类名。
+ -->
+<mapper namespace="org.vincent.model.IStudentOperation">
+    <!-- 在select标签中编写查询的SQL语句， 设置select标签的id属性为getStudent，id属性值必须是唯一的，不能够重复;
+    使用parameterType属性指明查询时传递进来使用的参数类型，resultType属性指明查询返回的结果集类型
+    resultType="org.vincent.domain.Student"就表示将查询结果映射成一个Student类的对象返回
+    Student类就是student表所对应的实体类
+    -->
+    <!-- 
+        根据id查询得到一个student对象
+        org.vincent.model.IStudentOperation.getStudentbyId
+        id 设置成接口的对应方法名public Student getStudentbyId(int id);
+        MyBatis会根据结果自动创建一个ResultMap对象，然后基于查找出来的属性名进行键值对封装，
+         然后再看到返回类型是Student对象，再从ResultMap中取出与Student对象匹配的属性名对应的
+         键值对进行赋值。
+        resultType 是
+     -->
+    <select id="getStudentbyId" parameterType="int" 
+        resultType="Student"> <!-- 直接使用在Mybatis配置文件中定义的类别名 -->
+        select * from student where id=#{id}
+    </select>
+    
+     <!-- 根据一个id 获取一组记录 -->
+    <select id="getStudents" parameterType="int"
+     	resultMap="list">
+     		select * from student where id >#{id}
+     </select>
+     <!-- Student是设置别名后 的类型；resultMap是为了返回list类型而设置的。被上面的select引用 
+     		column 为从数据库查询过来的属性，property属性制定了将从数据库查询过来的属性赋值给对象那个属性。
+     -->
+     <resultMap type="Student" id="list">
+     	<id column="id" property="id"/>
+     	<result column="name" property="name"/>
+     	<result column="age" property="age"/>
+     	<result column="address" property="address"/>
+     </resultMap>
+     
+     <!-- 插入一条记录 ，
+     id和parameterType  分别与IUserOperation接口中的insertStudent方法的名字和  
+       参数类型一致。以#{name}的形式引用Student参数的name属性，MyBatis将使用反射读取Student参数  
+       的此属性。#{name}中name大小写敏感。引用其他的gender等属性与此一致。useGeneratedKeys设置  
+       为"true"表明要MyBatis获取由数据库自动生成的主键id；keyProperty="id"指定将获取到的主键值注入  
+       到Student的id属性
+     -->
+     <insert id="insertStudent" parameterType="Student" useGeneratedKeys="true" keyProperty="id">
+     	INSERT INTO student(name, age, address) VALUES(#{name}, #{age} ,#{address} )
+     </insert>
+     <!-- 更新一条记录 -->
+     <update id="updateStudent" parameterType="Student" >
+     	update student SET name=#{name} , address=#{address} ,age=#{age} where id=#{id}
+     </update>
+     
+     <delete id="deleteStudent" parameterType="int">
+     	delete from student where id =#{id}
+     </delete>
+     <!-- 模糊查询 -->
+     <select id="fuzzyQuery" parameterType="java.lang.String" 
+     resultType="Student">
+     SELECT * FROM student where name like "%"#{name}"%"
+     </select>
+     
+</mapper>

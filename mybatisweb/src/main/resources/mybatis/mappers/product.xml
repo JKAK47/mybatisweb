@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 多表查询 -->
+
+<mapper namespace="org.vincent.model.IMutilQuery">
+	<!-- 多表复杂查询，第一种方式基于Mapper接口 总共有三种方法：  -->
+	<!-- 
+		products.prod_id , 
+		vendors.vend_id, 
+		products.prod_name,
+		 products.prod_price, 
+		 products.prod_desc 
+	 -->
+	<!-- 关联查询 根据一个供应商id，查询该供应商供应的商品 resultMap为 ProductList或者 ProductTwo -->
+	<select id="queryProducts" parameterType="int" resultMap="ProductTwo" > 
+		select  *
+		 From vendors, products
+		where vendors.vend_id= products.vend_id and vendors.vend_id=#{id}
+	</select>
+	<!-- 结果集  type 表示返回结果是一个什么类型，column属性表示从数据库中查询出来是什么，
+		property是表示赋值给java对象的那个属性 
+		子节点id是用于标识该对象的id的，而result子节点则是用于标识一些简单属性的
+		-->
+	<resultMap type="Product" id="ProductList">
+		<id property="prod_id" column="prod_id"/>
+	 
+		<result property="prod_name" column="prod_name"/>
+		<result property="prod_price" column="prod_price"/>
+		<result property="prod_desc" column="prod_desc"/>
+		<!--  第一种方法 通过association获取Vendor 引用-->
+		<association property="vendor"   javaType="Vendor" resultMap="vendorList" ></association>  		
+		<!-- 第二种方法： 直接定义Vendor 引用-->
+	<!-- 	<association property="vendor" javaType="Vendor"> 
+			<id property="vend_id" column="vend_id"/>
+			<result property="vend_name" column="vend_name"/>
+			<result property="vend_address" column="vend_address"/>
+			<result property="vend_city" column="vend_city"/>
+			<result property="vend_state" column="vend_state"/>
+			<result property="vend_zip" column="vend_zip"/>
+			<result property="vend_country" column="vend_country"/>
+		</association>  -->	
+	</resultMap>
+	<!--  resultMap 可以定义从数据库查询出来的列column, 赋值给对应的对象那个属性(property属性给出)；自定义列和类属性的映射对应关系 -->
+	<resultMap type="Vendor" id="vendorList">
+		<id property="vend_id" column="vend_id"/>
+		<result property="vend_name" column="vend_name"/>
+		<result property="vend_address" column="vend_address"/>
+		<result property="vend_city" column="vend_city"/>
+		<result property="vend_state" column="vend_state"/>
+		<result property="vend_zip" column="vend_zip"/>
+		<result property="vend_country" column="vend_country"/>
+	</resultMap>
+	
+	<!-- 第三种方法 
+		association子节点中，Property属性表示关联resultMap返回类型Product中那个属性，
+		对于上面的例子就是Product管理的vendor属性；javaType表示该属性对应的java类型。
+		Column表示id为queryProducts的select返回结果中那个字段值作为参数传递给selectVendor标识的select子标签查询关联的vendor实例，
+		不能使用不是SQL查询结果集中字段值。比如Product 类vendor值就不行。
+		select表示进行哪个select标签来查询对应的关联属性，即会去请求id为selectVendor所对应的语句。	
+	-->
+	<resultMap type="Product" id="ProductTwo">
+		<association property="vendor" javaType="Vendor" select="selectVendor" column="vend_id"/>
+	</resultMap>
+	<select id="selectVendor" parameterType="int" resultType="Vendor">
+	SELECT * FROM vendors where vend_id =#{id};
+	</select>
+	
+	
+	<!-- 第二种方式 基于sqlsession ；使用 resultType 属性表示 将基于SQL查询的结果 
+	自动映射resultType 所指对象的属性.-->
+	<select id="sqlsession" parameterType="int" resultType="org.vincent.model.Pojo">
+		SELECT
+		products.prod_id as brand,
+		products.prod_name as Name,
+		products.prod_price as price , 
+		products.prod_desc 	as description
+		From vendors, products
+		where vendors.vend_id= products.vend_id and vendors.vend_id=#{id}	 
+	</select>
+</mapper>
